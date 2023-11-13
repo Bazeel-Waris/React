@@ -1,9 +1,28 @@
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+// import Note from './Component/Note.jsx';
 
-// const App = (props) => {
-//   const [notes, setNotes] = useState(props.notes)
+// const App = () => {
+//   const [notes, setNotes] = useState([])
 //   const [newNote, setNewNote] = useState('a new note...') 
 //   const [showAll, setShowAll] = useState(true);
 
+//   const hook = () => {
+
+//     console.log('effect')
+    
+//     const eventHandler = response => {
+//       console.log('promise fulfilled')
+//       setNotes(response.data)
+//     }
+
+//     const promise = axios.get('http://localhost:3001/notes')
+//     promise.then(eventHandler)
+
+//   }
+
+//   useEffect(hook, [])
+//   console.log('render', notes.length, 'notes')
 //   const notesToShow = showAll ? notes : notes.filter( note => note.important === true);
 
 //   const handleNoteChange = (event) => {
@@ -42,23 +61,34 @@
 // }
 // export default App
 
-import { useState } from 'react'
+// -----------------------
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: '040-123456', id: 1 },
-    { name: 'Ada Lovelace', number: '39-44-5323523', id: 2 },
-    { name: 'Dan Abramov', number: '12-43-234345', id: 3 },
-    { name: 'Mary Poppendieck', number: '39-23-6423122', id: 4 }
-  ]);
+  const [persons, setPersons] = useState([]);
   const [filteredList, setFilteredList] = new useState(persons);
   const [newName, setNewName] = useState('');
   const [newNumber, setNewNumber] = useState('');
 
+  const hook = () => {
+    console.log('Effect');
+
+    const handleData = (response) => {
+      console.log(response)
+      const data = response.data;
+      setPersons(data);
+    }
+    const promise = axios.get('http://localhost:3001/persons');
+    promise.then( handleData )
+  }
+
+  useEffect(hook, []);
+  console.log('render', persons, 'persons');
+
   const handleChangeName = event => setNewName(event.target.value);
   const handleChangeNumber = event => setNewNumber(event.target.value);
 
-  const add = () => {
+  const add = (event) => {
+    
     event.preventDefault();
     const personObject = { 
       name: newName,
@@ -136,11 +166,13 @@ const PersonForm = ({add, newName, newNumber, handleChangeName, handleChangeNumb
 const Person = ({persons}) => {
   return (
     <div>
-      {/* <div>debug: {newName} {newNumber}</div> */}
+
       {persons.map((person, i) => <div key={i}>{person.name} {person.number}</div>)}
     </div>
   )
 }
+
+
 // -----------------------------------------------------------------------------------
 // const App = () => {
 //   const courses = [
