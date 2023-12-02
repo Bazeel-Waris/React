@@ -1,28 +1,31 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-// import Note from './Component/Note.jsx';
+import Note from './Component/Note.jsx';
+import noteService from './services/notes'
+import personService from './services/persons'
 
 // const App = () => {
 //   const [notes, setNotes] = useState([])
-//   const [newNote, setNewNote] = useState('a new note...') 
+//   const [newNote, setNewNote] = useState('') 
 //   const [showAll, setShowAll] = useState(true);
 
 //   const hook = () => {
 
-//     console.log('effect')
-    
-//     const eventHandler = response => {
-//       console.log('promise fulfilled')
-//       setNotes(response.data)
-//     }
+//     // const eventHandler = response => {
+//     //   console.log('promise fulfilled')
+//     //   setNotes(response.data)
+//     // }
 
-//     const promise = axios.get('http://localhost:3001/notes')
-//     promise.then(eventHandler)
+//     noteService.getAll().then(initialNotes => {
+//       console.log(initialNotes)
+//       setNotes(initialNotes)
+//     })
 
 //   }
 
 //   useEffect(hook, [])
-//   console.log('render', notes.length, 'notes')
+//   // console.log('render', notes.length, 'notes')
+
 //   const notesToShow = showAll ? notes : notes.filter( note => note.important === true);
 
 //   const handleNoteChange = (event) => {
@@ -31,15 +34,40 @@ import axios from 'axios';
 //   }
 
 //   const addNote = (event) => {
+
 //     event.preventDefault();
 //     const noteObject = {
 //       content: newNote,
 //       important: Math.random() < 0.5,
-//       id: notes.length + 1,
 //     }
 
-//     setNotes(notes.concat(noteObject))
-//     setNewNote('')  
+//     noteService.create(noteObject).then(returnedNote => {
+//       setNotes(notes.concat(returnedNote))
+//       setNewNote('')  
+//     })
+//     // noteService.create(noteObject).then(response => {
+//     //   console.log(response)
+//     //   setNotes(notes.concat(response.data))
+//     //   setNewNote('')  
+//     // })
+    
+//   }
+
+//   const toggleImportanceOf = (id) => {
+//     // const url = `http://localhost:3001/notes/${id}`
+//     const note = notes.find(n => n.id === id)
+//     const changedNote = { ...note, important: !note.important }
+
+//     noteService.update(id, changedNote).then(returnedNote => {
+//       setNotes(notes.map(note => note.id !== id ? note : returnedNote))
+//     })
+//     .catch(error => {
+//       alert(
+//         `the note '${note.content}' was already deleted from server`
+//       )
+//       setNotes(notes.filter(n => n.id !== id))
+//     })
+//     // console.log(`Importance of ${id} needs to be toggled!`)
 //   }
 //   return (
 //     <div>
@@ -50,7 +78,7 @@ import axios from 'axios';
 //         </button>
 //       </div>
 //       <ul>
-//         { notesToShow.map( note => <Note key={note.id} note={note} />) }
+//         { notesToShow.map( (note,i) => <Note key={i} note={note} toggleImportance={() => toggleImportanceOf(note.id)}/>) }
 //       </ul>
 //       <form onSubmit={addNote}>
 //         <input value={newNote} onChange={handleNoteChange}/>
@@ -63,44 +91,65 @@ import axios from 'axios';
 
 // -----------------------
 
+
 const App = () => {
   const [persons, setPersons] = useState([]);
-  const [filteredList, setFilteredList] = new useState(persons);
+  const [filteredList, setFilteredList] = useState(persons);
   const [newName, setNewName] = useState('');
   const [newNumber, setNewNumber] = useState('');
 
   const hook = () => {
-    console.log('Effect');
+    // console.log('Effect');
 
-    const handleData = (response) => {
-      console.log(response)
-      const data = response.data;
-      setPersons(data);
-    }
-    const promise = axios.get('http://localhost:3001/persons');
-    promise.then( handleData )
+    // const handleData = (response) => {
+    //   console.log(response)
+    //   const data = response.data;
+    //   setPersons(data);
+    // }
+    
+    // const promise = axios.get('http://localhost:3001/persons');
+    // promise.then( handleData )
+
+    personService.getAllPersons().then(persons => setPersons(persons))
   }
 
   useEffect(hook, []);
-  console.log('render', persons, 'persons');
+  // console.log('render', persons, 'persons');
 
   const handleChangeName = event => setNewName(event.target.value);
   const handleChangeNumber = event => setNewNumber(event.target.value);
 
   const add = (event) => {
-    
+
     event.preventDefault();
     const personObject = { 
       name: newName,
       number: newNumber,
     };
     
-    const p = persons.map(per => JSON.stringify(per));
-  
-    if(p.includes(JSON.stringify(personObject)))
-      alert(`${personObject.name} is already added to Phone Book`);
-    else
-      setPersons([...persons, personObject]);
+    const indexOfElement = persons.findIndex(person => person.name === personObject.name);
+    if(confirm(`${personObject.name} is already added to phonebook, replace the old number with new one?`) && indexOfElement !== -1)
+    {
+     
+      const updatedPersons = [...persons];
+      updatedPersons[indexOfElement] = personObject;
+
+      personService.updatePerson(persons[indexOfElement].id, personObject)
+      .then(updatedPerson => {
+              setPersons(updatedPersons);
+              setNewName('');
+              setNewNumber('');
+            })
+    }
+    else if(indexOfElement === -1)
+    {
+      // axios.post('http://localhost:3001/persons', personObject).then(response => {
+      //   console.log(response.data)
+      //   setPersons([...persons, response.data]);
+      // })
+      personService.createPerson(personObject).then(addPerson => setPersons([...persons, addPerson]))
+    }
+    
 
     setNewName('');
     setNewNumber('');
@@ -120,6 +169,20 @@ const App = () => {
 
   }
 
+  // Delete Phone Number
+  const handleDelete = (id) => {
+    const url = `http://localhost:3001/persons/${id}`
+    const per = persons.find(p => p.id === id)
+
+    if(confirm(`Are you sure to Delete ${per.name}`))
+    {
+      axios.delete(url).then(res => {
+        const updatedPersons = persons.filter(p => p.id !== id);
+        setPersons(updatedPersons);
+      })
+    }
+    
+  }
   return (
     <div>
       <h2>Phonebook</h2>
@@ -139,7 +202,7 @@ const App = () => {
 
       <h2>Numbers</h2>
       
-      <Person persons={persons}/>
+      <Person persons={persons} handleDelete={handleDelete}/>
     </div>
   )
 }
@@ -163,11 +226,12 @@ const PersonForm = ({add, newName, newNumber, handleChangeName, handleChangeNumb
     </div>
   )
 }
-const Person = ({persons}) => {
+
+const Person = ({persons, handleDelete}) => {
+ 
   return (
     <div>
-
-      {persons.map((person, i) => <div key={i}>{person.name} {person.number}</div>)}
+      {persons.map((person, i) => <div key={i}>{person.name} {person.number} <button onClick={() => handleDelete(person.id)}>Delete</button></div>)}
     </div>
   )
 }
