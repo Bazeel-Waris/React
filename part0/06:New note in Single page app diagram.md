@@ -37,4 +37,3 @@
     Note right of browser: The browser sends server a POST request with a value entered by user and current time & date on form submission
     Note right from server: server returns a confirmation message to browser
 ```
-`
