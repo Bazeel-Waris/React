@@ -1,7 +1,6 @@
 ## Sequence Diagram using mermaid
 
-```
-  mermaid
+```mermaid
   sequenceDiagram
     participant browser
     participant server
